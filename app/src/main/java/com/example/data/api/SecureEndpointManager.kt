@@ -48,6 +48,7 @@ object SecureEndpointManager {
 
     private val httpClient by lazy {
         OkHttpClient.Builder()
+            .proxy(java.net.Proxy.NO_PROXY)
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
             .callTimeout(25, TimeUnit.SECONDS)

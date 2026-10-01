@@ -72,7 +72,7 @@ android {
   buildTypes {
     release {
       isCrunchPngs = false
-      isMinifyEnabled = false
+      isMinifyEnabled = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("release")
     }
@@ -130,12 +130,12 @@ dependencies {
   // implementation(libs.androidx.room.runtime)
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
-  implementation(libs.converter.gson)
-  implementation(libs.google.gson)
-  implementation(libs.androidx.media3.exoplayer)
-  implementation(libs.androidx.media3.ui)
-  implementation(libs.androidx.work.runtime.ktx)
-  implementation(libs.lottie.compose)
+  implementation("com.squareup.retrofit2:converter-gson:2.12.0")
+  implementation("com.google.code.gson:gson:2.11.0")
+  implementation("androidx.media3:media3-exoplayer:1.5.1")
+  implementation("androidx.media3:media3-ui:1.5.1")
+  implementation("androidx.work:work-runtime-ktx:2.10.0")
+  implementation("com.airbnb.android:lottie-compose:6.6.2")
   // implementation(libs.firebase.ai)
   // Uncomment to use Firestore:
   // implementation(libs.firebase.firestore)
@@ -161,9 +161,9 @@ dependencies {
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.robolectric)
-  testImplementation(libs.roborazzi)
-  testImplementation(libs.roborazzi.compose)
-  testImplementation(libs.roborazzi.junit.rule)
+  testImplementation("io.github.takahirom.roborazzi:roborazzi:1.59.0")
+  testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.59.0")
+  testImplementation("io.github.takahirom.roborazzi:roborazzi-junit-rule:1.59.0")
   androidTestImplementation(platform(libs.androidx.compose.bom))
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.espresso.core)
