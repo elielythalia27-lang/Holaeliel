@@ -37,9 +37,9 @@ jobs:
 
       - name: Prepare Local Environment and Permissions
         run: |
-          if [ ! -f "gradlew" ]; then
+          if [ ! -f "gradlew" ] || [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
             echo "Generating Gradle wrapper with Gradle 9.3.1..."
-            gradle wrapper --gradle-version 9.3.1 --no-daemon
+            gradle wrapper --gradle-version 9.3.1 --no-daemon || true
           fi
           chmod +x gradlew || true
           touch .env && touch .env.example
@@ -73,23 +73,22 @@ jobs:
           echo "KEY_ALIAS=$DETECTED_ALIAS" >> $GITHUB_ENV
           echo "STORE_PASSWORD=android" >> $GITHUB_ENV
           echo "KEY_PASSWORD=android" >> $GITHUB_ENV
-          echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/my-upload-key.jks" >> $GITHUB_ENV
+          echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/$KEYSTORE_FILE" >> $GITHUB_ENV
 
-          # Redundant copies in both root and app/ avoiding self-copy
-          TARGET_ROOT="$GITHUB_WORKSPACE/my-upload-key.jks"
-          TARGET_APP="$GITHUB_WORKSPACE/app/my-upload-key.jks"
-          SRC_ABS="$(realpath "$KEYSTORE_FILE")"
-
-          if [ "$SRC_ABS" != "$TARGET_ROOT" ]; then
-            cp -f "$SRC_ABS" "$TARGET_ROOT"
+          # Ensure safe copy in app/ directory without duplicate self-copy error
+          mkdir -p app
+          if [ "$KEYSTORE_FILE" != "app/my-upload-key.jks" ] && [ -f "$KEYSTORE_FILE" ]; then
+            cp -f "$KEYSTORE_FILE" "app/my-upload-key.jks" 2>/dev/null || true
           fi
-          if [ "$SRC_ABS" != "$TARGET_APP" ]; then
-            cp -f "$SRC_ABS" "$TARGET_APP"
-          fi
+          echo "Keystore setup completed successfully!"
 
       - name: Build Release APK
         run: |
-          ./gradlew :app:assembleRelease --no-daemon -Dkotlin.compiler.execution.strategy=daemon -Dksp.incremental=false -Dksp.incremental.intermodule=false --stacktrace
+          if [ -x "./gradlew" ] && [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+            ./gradlew :app:assembleRelease --no-daemon -Dkotlin.compiler.execution.strategy=daemon -Dksp.incremental=false -Dksp.incremental.intermodule=false --stacktrace
+          else
+            gradle :app:assembleRelease --no-daemon -Dkotlin.compiler.execution.strategy=daemon -Dksp.incremental=false -Dksp.incremental.intermodule=false --stacktrace
+          fi
 
       - name: Verify APK Output
         run: |
