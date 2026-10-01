@@ -31,17 +31,17 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
+          gradle-version: '9.3.1'
           add-job-summary: 'on-failure'
           add-job-summary-as-pr-comment: 'never'
 
       - name: Prepare Local Environment and Permissions
         run: |
-          chmod +x gradlew || true
           if [ ! -f "gradlew" ]; then
-            echo "Generating Gradle wrapper..."
-            gradle wrapper
-            chmod +x gradlew
+            echo "Generating Gradle wrapper with Gradle 9.3.1..."
+            gradle wrapper --gradle-version 9.3.1 --no-daemon
           fi
+          chmod +x gradlew || true
           touch .env && touch .env.example
 
       - name: Setup Keystore and Detect Signing Alias
