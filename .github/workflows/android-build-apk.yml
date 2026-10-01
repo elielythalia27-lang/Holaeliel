@@ -75,9 +75,17 @@ jobs:
           echo "KEY_PASSWORD=android" >> $GITHUB_ENV
           echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/my-upload-key.jks" >> $GITHUB_ENV
 
-          # Redundant copies in both root and app/
-          cp "$KEYSTORE_FILE" "$GITHUB_WORKSPACE/my-upload-key.jks"
-          cp "$KEYSTORE_FILE" "$GITHUB_WORKSPACE/app/my-upload-key.jks"
+          # Redundant copies in both root and app/ avoiding self-copy
+          TARGET_ROOT="$GITHUB_WORKSPACE/my-upload-key.jks"
+          TARGET_APP="$GITHUB_WORKSPACE/app/my-upload-key.jks"
+          SRC_ABS="$(realpath "$KEYSTORE_FILE")"
+
+          if [ "$SRC_ABS" != "$TARGET_ROOT" ]; then
+            cp -f "$SRC_ABS" "$TARGET_ROOT"
+          fi
+          if [ "$SRC_ABS" != "$TARGET_APP" ]; then
+            cp -f "$SRC_ABS" "$TARGET_APP"
+          fi
 
       - name: Build Release APK
         run: |
