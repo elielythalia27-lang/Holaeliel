@@ -1,0 +1,101 @@
+name: Build Android Release APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Signed Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          add-job-summary: 'on-failure'
+          add-job-summary-as-pr-comment: 'never'
+
+      - name: Prepare Local Environment and Permissions
+        run: |
+          chmod +x gradlew || true
+          if [ ! -f "gradlew" ]; then
+            echo "Generating Gradle wrapper..."
+            gradle wrapper
+            chmod +x gradlew
+          fi
+          touch .env && touch .env.example
+
+      - name: Setup Keystore and Detect Signing Alias
+        run: |
+          KEYSTORE_FILE=""
+          if [ -f "my-upload-key.jks" ]; then
+            KEYSTORE_FILE="my-upload-key.jks"
+          elif [ -f "app/my-upload-key.jks" ]; then
+            KEYSTORE_FILE="app/my-upload-key.jks"
+          elif [ -f "release.keystore" ]; then
+            KEYSTORE_FILE="release.keystore"
+          elif [ -f "debug.keystore" ]; then
+            KEYSTORE_FILE="debug.keystore"
+          fi
+
+          if [ -z "$KEYSTORE_FILE" ]; then
+            echo "Generating release keystore..."
+            keytool -genkey -v -keystore my-upload-key.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=DownloadFree, OU=Android, O=App, L=City, S=State, C=US"
+            KEYSTORE_FILE="my-upload-key.jks"
+          fi
+
+          # Inspect keystore alias dynamically using keytool
+          DETECTED_ALIAS=$(keytool -list -keystore "$KEYSTORE_FILE" -storepass android 2>/dev/null | grep -E "Alias name:|PrivateKeyEntry" | head -n 1 | sed -E 's/.*Alias name: //; s/,.*//; s/ .*//' | tr -d '\r\n')
+          if [ -z "$DETECTED_ALIAS" ]; then
+            DETECTED_ALIAS="upload"
+          fi
+
+          echo "Detected Keystore Alias: $DETECTED_ALIAS"
+          echo "KEY_ALIAS=$DETECTED_ALIAS" >> $GITHUB_ENV
+          echo "STORE_PASSWORD=android" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=android" >> $GITHUB_ENV
+          echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/my-upload-key.jks" >> $GITHUB_ENV
+
+          # Redundant copies in both root and app/
+          cp "$KEYSTORE_FILE" "$GITHUB_WORKSPACE/my-upload-key.jks"
+          cp "$KEYSTORE_FILE" "$GITHUB_WORKSPACE/app/my-upload-key.jks"
+
+      - name: Build Release APK
+        run: |
+          ./gradlew :app:assembleRelease --no-daemon -Dkotlin.compiler.execution.strategy=daemon -Dksp.incremental=false -Dksp.incremental.intermodule=false --stacktrace
+
+      - name: Verify APK Output
+        run: |
+          ls -la app/build/outputs/apk/release/
+          APK_COUNT=$(find app/build/outputs/apk/release/ -name "*.apk" | wc -l)
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "Error: No APK found in app/build/outputs/apk/release/"
+            exit 1
+          fi
+          echo "Release APK generated successfully!"
+
+      - name: Upload Release APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: app/build/outputs/apk/release/*.apk
+          retention-days: 30
