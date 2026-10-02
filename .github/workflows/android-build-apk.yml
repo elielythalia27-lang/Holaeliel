@@ -32,6 +32,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
+          cache-disabled: true
           add-job-summary: 'on-failure'
           add-job-summary-as-pr-comment: 'never'
 
@@ -85,9 +86,9 @@ jobs:
       - name: Build Release APK
         run: |
           if [ -x "./gradlew" ] && [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            ./gradlew :app:assembleRelease --no-daemon -Dkotlin.compiler.execution.strategy=daemon -Dksp.incremental=false -Dksp.incremental.intermodule=false --stacktrace
+            ./gradlew :app:assembleRelease --no-daemon --no-build-cache -Dkotlin.compiler.execution.strategy=daemon -Dksp.incremental=false -Dksp.incremental.intermodule=false --stacktrace
           else
-            gradle :app:assembleRelease --no-daemon -Dkotlin.compiler.execution.strategy=daemon -Dksp.incremental=false -Dksp.incremental.intermodule=false --stacktrace
+            gradle :app:assembleRelease --no-daemon --no-build-cache -Dkotlin.compiler.execution.strategy=daemon -Dksp.incremental=false -Dksp.incremental.intermodule=false --stacktrace
           fi
 
       - name: Verify APK Output

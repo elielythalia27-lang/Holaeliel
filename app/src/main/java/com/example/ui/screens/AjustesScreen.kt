@@ -74,7 +74,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import java.io.File
-import com.example.utils.StoragePathUtils
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PlayCircleOutline
 import androidx.compose.material.icons.filled.Remove
@@ -885,11 +884,24 @@ fun AjustesScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(14.dp)
                             ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.telegram),
-                                    contentDescription = "Telegram oficial",
-                                    modifier = Modifier.size(38.dp)
-                                )
+                                val telegramResId = remember(context) {
+                                    val id = context.resources.getIdentifier("telegram", "drawable", context.packageName)
+                                    if (id != 0) id else context.resources.getIdentifier("ic_telegram_logo", "drawable", context.packageName)
+                                }
+                                if (telegramResId != 0) {
+                                    Image(
+                                        painter = painterResource(id = telegramResId),
+                                        contentDescription = "Telegram oficial",
+                                        modifier = Modifier.size(38.dp)
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                        contentDescription = "Telegram oficial",
+                                        tint = Color(0xFF29B6F6),
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = "Canal oficial de Telegram",
@@ -1467,6 +1479,100 @@ private fun ThemeColorPickerDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+object StoragePathUtils {
+
+    data class FolderResult(
+        val name: String,
+        val path: String
+    )
+
+    fun getDefaultDownloadFolder(context: android.content.Context? = null): FolderResult {
+        val safeDir = context?.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS)
+            ?: try {
+                File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "Download Free")
+            } catch (_: Exception) {
+                File("/storage/emulated/0/Download/Download Free")
+            }
+        return FolderResult(
+            name = "Download Free",
+            path = safeDir.absolutePath
+        )
+    }
+
+    fun parseTreeUri(context: android.content.Context, uri: android.net.Uri): FolderResult {
+        try {
+            val docId = try {
+                if (android.provider.DocumentsContract.isTreeUri(uri)) {
+                    android.provider.DocumentsContract.getTreeDocumentId(uri)
+                } else {
+                    android.provider.DocumentsContract.getDocumentId(uri)
+                }
+            } catch (_: Exception) {
+                uri.path ?: ""
+            }
+
+            val decodedDocId = try {
+                java.net.URLDecoder.decode(docId, "UTF-8")
+            } catch (_: Exception) {
+                docId
+            }
+
+            if (decodedDocId.startsWith("raw:", ignoreCase = true)) {
+                val rawPath = decodedDocId.substring(4)
+                val folderName = rawPath.trimEnd('/').substringAfterLast('/')
+                return FolderResult(
+                    name = folderName.ifBlank { "Descargas" },
+                    path = rawPath
+                )
+            }
+
+            val split = decodedDocId.split(":")
+            val type = split.getOrNull(0) ?: "primary"
+            val relativePath = if (split.size > 1) split[1] else ""
+
+            val realPath = if (type.equals("primary", ignoreCase = true)) {
+                if (relativePath.isBlank()) {
+                    "/storage/emulated/0"
+                } else {
+                    "/storage/emulated/0/${relativePath.trimStart('/')}"
+                }
+            } else if (type.matches(Regex("[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}"))) {
+                if (relativePath.isBlank()) {
+                    "/storage/$type"
+                } else {
+                    "/storage/$type/${relativePath.trimStart('/')}"
+                }
+            } else {
+                if (relativePath.isNotBlank()) {
+                    "/storage/emulated/0/${relativePath.trimStart('/')}"
+                } else {
+                    val fallbackSegment = uri.lastPathSegment?.substringAfterLast(":") ?: ""
+                    if (fallbackSegment.isNotBlank()) "/storage/emulated/0/$fallbackSegment" else "/storage/emulated/0/Download"
+                }
+            }
+
+            val folderName = if (relativePath.isNotBlank()) {
+                relativePath.trimEnd('/').substringAfterLast('/')
+            } else if (type.equals("primary", ignoreCase = true)) {
+                "Almacenamiento interno"
+            } else {
+                "Tarjeta SD"
+            }
+
+            return FolderResult(
+                name = folderName.ifBlank { "Carpeta" },
+                path = realPath
+            )
+        } catch (e: Exception) {
+            val defaultRes = getDefaultDownloadFolder()
+            return FolderResult(
+                name = "Descargas",
+                path = defaultRes.path
+            )
         }
     }
 }

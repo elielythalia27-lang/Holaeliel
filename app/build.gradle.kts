@@ -1,4 +1,4 @@
-// import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
+import java.security.KeyStore
 
 plugins {
   alias(libs.plugins.android.application)
@@ -43,7 +43,22 @@ android {
 
       storeFile = keystoreFile
       val isDebugKeystoreFallback = keystoreFile.name == "debug.keystore"
-      val defaultAlias = if (isDebugKeystoreFallback) "androiddebugkey" else "upload"
+
+      val detectedKeyAlias: String? = try {
+        if (keystoreFile.exists()) {
+          val ks = KeyStore.getInstance(KeyStore.getDefaultType())
+          val pwd = (System.getenv("STORE_PASSWORD") ?: System.getenv("RELEASE_STORE_PASSWORD") ?: "android").toCharArray()
+          keystoreFile.inputStream().use { stream ->
+            ks.load(stream, pwd)
+          }
+          val aliases = ks.aliases()
+          if (aliases.hasMoreElements()) aliases.nextElement() else null
+        } else null
+      } catch (_: Exception) {
+        null
+      }
+
+      val defaultAlias = detectedKeyAlias ?: if (isDebugKeystoreFallback) "androiddebugkey" else "upload"
 
       storePassword = System.getenv("STORE_PASSWORD")
         ?: System.getenv("RELEASE_STORE_PASSWORD")

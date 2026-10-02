@@ -134,6 +134,11 @@ object NotificationUtils {
         return builder
     }
 
+    private fun getIcon(context: Context, resName: String, fallbackAndroidResId: Int): Int {
+        val id = context.resources.getIdentifier(resName, "drawable", context.packageName)
+        return if (id != 0) id else fallbackAndroidResId
+    }
+
     fun buildProgressNotification(
         context: Context,
         item: DownloadItem,
@@ -182,17 +187,17 @@ object NotificationUtils {
             .setContentTitle("Descargando: $displayTitle")
             .setContentText(subtitle)
             .setStyle(NotificationCompat.BigTextStyle().bigText(subtitle))
-            .setSmallIcon(R.drawable.ic_notification_download)
+            .setSmallIcon(getIcon(context, "ic_notification_download", android.R.drawable.stat_sys_download))
             .setColor(0xFF00897B.toInt())
             .setProgress(100, if (isIndeterminate) 0 else progress, isIndeterminate)
             .setContentIntent(createOpenDownloadsPendingIntent(context))
             .addAction(
-                R.drawable.ic_notification_pause,
+                getIcon(context, "ic_notification_pause", android.R.drawable.ic_media_pause),
                 "Pausar",
                 createPausePendingIntent(context, item.id)
             )
             .addAction(
-                R.drawable.ic_notification_cancel,
+                getIcon(context, "ic_notification_cancel", android.R.drawable.ic_menu_close_clear_cancel),
                 "Cancelar",
                 createCancelPendingIntent(context, item.id)
             )
@@ -230,17 +235,17 @@ object NotificationUtils {
             .setContentTitle("En pausa: $displayTitle")
             .setContentText(subtitle)
             .setStyle(NotificationCompat.BigTextStyle().bigText(subtitle))
-            .setSmallIcon(R.drawable.ic_notification_pause)
+            .setSmallIcon(getIcon(context, "ic_notification_pause", android.R.drawable.ic_media_pause))
             .setColor(0xFFF59E0B.toInt())
             .setProgress(100, item.progress, false)
             .setContentIntent(createOpenDownloadsPendingIntent(context))
             .addAction(
-                R.drawable.ic_notification_play,
+                getIcon(context, "ic_notification_play", android.R.drawable.ic_media_play),
                 "Reanudar",
                 createResumePendingIntent(context, item.id)
             )
             .addAction(
-                R.drawable.ic_notification_cancel,
+                getIcon(context, "ic_notification_cancel", android.R.drawable.ic_menu_close_clear_cancel),
                 "Cancelar",
                 createCancelPendingIntent(context, item.id)
             )
@@ -271,7 +276,7 @@ object NotificationUtils {
             .setContentTitle("Descarga completada")
             .setContentText("$displayTitle • $sizeStr")
             .setStyle(NotificationCompat.BigTextStyle().bigText("$displayTitle\n$detail"))
-            .setSmallIcon(R.drawable.ic_notification_done)
+            .setSmallIcon(getIcon(context, "ic_notification_done", android.R.drawable.stat_sys_download_done))
             .setColor(0xFF10B981.toInt())
             .setContentIntent(createOpenDownloadsPendingIntent(context))
             .setAutoCancel(true)
@@ -310,16 +315,16 @@ object NotificationUtils {
             .setContentTitle("Descarga detenida")
             .setContentText(subtitle)
             .setStyle(NotificationCompat.BigTextStyle().bigText("$displayTitle\n$cleanError. Puedes reanudar cuando recuperes conexión."))
-            .setSmallIcon(R.drawable.ic_notification_error)
+            .setSmallIcon(getIcon(context, "ic_notification_error", android.R.drawable.stat_notify_error))
             .setColor(0xFFEF4444.toInt())
             .setContentIntent(createOpenDownloadsPendingIntent(context))
             .addAction(
-                R.drawable.ic_notification_play,
+                getIcon(context, "ic_notification_play", android.R.drawable.ic_media_play),
                 "Reintentar",
                 createResumePendingIntent(context, item.id)
             )
             .addAction(
-                R.drawable.ic_notification_cancel,
+                getIcon(context, "ic_notification_cancel", android.R.drawable.ic_menu_close_clear_cancel),
                 "Cancelar",
                 createCancelPendingIntent(context, item.id)
             )
@@ -335,7 +340,7 @@ object NotificationUtils {
         return createCompatBuilder(context, CHANNEL_PROGRESS_ID)
             .setContentTitle("Download Free")
             .setContentText("Servicio de descargas activo en segundo plano")
-            .setSmallIcon(R.drawable.ic_notification_download)
+            .setSmallIcon(getIcon(context, "ic_notification_download", android.R.drawable.stat_sys_download))
             .setColor(0xFF00897B.toInt())
             .setOngoing(true)
             .setSilent(true)

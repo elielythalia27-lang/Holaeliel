@@ -8,15 +8,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.R
 
-// Fuente para toda la aplicación subida por el usuario
-val AppFont = FontFamily(
-    Font(R.font.fuente, FontWeight.Normal)
-)
+// Fuente para toda la aplicación
+val AppFont = FontFamily.SansSerif
 
-// Fuente para el título principal "Download Free" subida por el usuario
-val ElielFont = FontFamily(
-    Font(R.font.eliel, FontWeight.Normal)
-)
+// Fuente para el título principal "Download Free"
+val ElielFont = FontFamily.Default
 
 val Typography = Typography(
     displayLarge = TextStyle(

@@ -90,9 +90,14 @@ fun LottiePullToRefreshIndicator(
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val rawId = remember(context) {
+        context.resources.getIdentifier("pull_to_refresh", "raw", context.packageName)
+    }
+
     // Load Lottie animation composition
     val composition by rememberLottieComposition(
-        spec = LottieCompositionSpec.RawRes(R.raw.pull_to_refresh)
+        spec = if (rawId != 0) LottieCompositionSpec.RawRes(rawId) else LottieCompositionSpec.JsonString("{}")
     )
 
     // When refreshing, loop endlessly; when pulling, progress is bound to pull distance

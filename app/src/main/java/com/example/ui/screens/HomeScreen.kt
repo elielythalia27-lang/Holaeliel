@@ -52,6 +52,7 @@ import androidx.compose.material.icons.filled.FilterListOff
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -292,11 +293,24 @@ fun HomeScreen(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.telegram),
-                                contentDescription = "Canal de Telegram",
-                                modifier = Modifier.size(24.dp)
-                            )
+                            val telegramResId = remember(context) {
+                                val id = context.resources.getIdentifier("telegram", "drawable", context.packageName)
+                                if (id != 0) id else context.resources.getIdentifier("ic_telegram_logo", "drawable", context.packageName)
+                            }
+                            if (telegramResId != 0) {
+                                Image(
+                                    painter = painterResource(id = telegramResId),
+                                    contentDescription = "Canal de Telegram",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Filled.Send,
+                                    contentDescription = "Canal de Telegram",
+                                    tint = Color(0xFF29B6F6),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -1044,11 +1058,24 @@ fun HomeScreen(
             titleContentColor = titleTextColor,
             textContentColor = subtitleTextColor,
             icon = {
-                Image(
-                    painter = painterResource(id = R.drawable.telegram),
-                    contentDescription = "Telegram",
-                    modifier = Modifier.size(52.dp)
-                )
+                val telegramResId = remember(context) {
+                    val id = context.resources.getIdentifier("telegram", "drawable", context.packageName)
+                    if (id != 0) id else context.resources.getIdentifier("ic_telegram_logo", "drawable", context.packageName)
+                }
+                if (telegramResId != 0) {
+                    Image(
+                        painter = painterResource(id = telegramResId),
+                        contentDescription = "Telegram",
+                        modifier = Modifier.size(52.dp)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.Send,
+                        contentDescription = "Telegram",
+                        tint = Color(0xFF29B6F6),
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
             },
             title = {
                 Text(
